@@ -1,0 +1,160 @@
+// Prisma schema for MechMap - Mechanistic Interpretability Visualization
+// Database for collaborative discovery of circuits in GPT-2 transformers
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Contributor ────────────────────────────────────────────
+// Represents a researcher or contributor working on circuit discovery
+model Contributor {
+  id            String         @id @default(cuid())
+  name          String
+  email         String?        @unique
+  avatarUrl     String?
+  bio           String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  
+  // Relations
+  projects      Project[]
+  annotations   Annotation[]
+  circuitPaths  CircuitPath[]
+  comments      Comment[]
+
+  @@map("contributors")
+}
+
+// ─── Project ────────────────────────────────────────────────
+// Represents a model architecture configuration and research context
+model Project {
+  id            String         @id @default(cuid())
+  name          String
+  description   String?
+  modelName     String         @default("GPT-2 Small")
+  numLayers     Int            @default(12)
+  numHeads      Int            @default(12)
+  isPublic      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  
+  // Contributor who created this project
+  contributorId String?
+  contributor   Contributor?   @relation(fields: [contributorId], references: [id])
+  
+  // Relations
+  annotations   Annotation[]
+  circuitPaths  CircuitPath[]
+
+  @@map("projects")
+}
+
+// ─── Annotation ─────────────────────────────────────────────
+// Stores findings about specific transformer components
+model Annotation {
+  id            String         @id @default(cuid())
+  projectId     String
+  project       Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  componentType String         // 'attention_head' or 'mlp'
+  layerIndex    Int
+  headIndex     Int?           // Only for attention heads
+  notes         String
+  tags          String         // JSON array of tags
+  importance    String         @default("unknown") // 'high', 'medium', 'low', 'unknown'
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  
+  // Contributor who made this annotation
+  contributorId String?
+  contributor   Contributor?   @relation(fields: [contributorId], references: [id])
+  
+  // Relations
+  comments      Comment[]
+  pathNodes     PathNode[]     // This component participates in circuit paths
+
+  @@unique([projectId, componentType, layerIndex, headIndex])
+  @@map("annotations")
+}
+
+// ─── CircuitPath ────────────────────────────────────────────
+// Represents a discovered information flow path through the transformer
+// e.g., "Induction Circuit: L1H7 (prev token) → L5H5 (induction) → L9H8 (copy)"
+model CircuitPath {
+  id            String         @id @default(cuid())
+  projectId     String
+  project       Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name          String         // e.g., "IOI Induction Circuit"
+  description   String?        // Detailed description of this circuit
+  circuitType   String         @default("unknown") // 'induction', 'factual_recall', 'copy', 'inhibition', 'boosting', 'custom'
+  hypothesis    String?        // What this circuit is believed to do
+  evidence      String?        // Supporting evidence for this circuit's function
+  confidence    String         @default("speculative") // 'verified', 'likely', 'speculative'
+  color         String         @default("#3b82f6") // Display color for visualization
+  isPublic      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  
+  // Contributor who discovered this circuit
+  contributorId String?
+  contributor   Contributor?   @relation(fields: [contributorId], references: [id])
+  
+  // Relations  
+  nodes         PathNode[]     // Ordered components in this circuit
+  comments      Comment[]
+
+  @@map("circuit_paths")
+}
+
+// ─── PathNode ───────────────────────────────────────────────
+// A single node in a circuit path, linking to a specific transformer component
+// Nodes are ordered by `position` to show the flow direction
+model PathNode {
+  id            String         @id @default(cuid())
+  circuitPathId String
+  circuitPath   CircuitPath    @relation(fields: [circuitPathId], references: [id], onDelete: Cascade)
+  position      Int            // Order in the circuit (0, 1, 2, ...)
+  componentType String         // 'attention_head' or 'mlp'
+  layerIndex    Int
+  headIndex     Int?           // Only for attention heads
+  role          String?        // Role in circuit: 'source', 'relay', 'amplifier', 'inhibitor', 'sink'
+  signalType    String?        // What signal flows: 'positional', 'content', 'name', 'fact', etc.
+  notes         String?        // Component-specific notes within this circuit context
+  
+  // Optional link to an annotation for this component
+  annotationId  String?
+  annotation    Annotation?    @relation(fields: [annotationId], references: [id])
+
+  @@unique([circuitPathId, position])
+  @@map("path_nodes")
+}
+
+// ─── Comment ────────────────────────────────────────────────
+// Discussion threads on annotations and circuit paths
+model Comment {
+  id            String         @id @default(cuid())
+  content       String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  
+  // Author
+  contributorId String?
+  contributor   Contributor?   @relation(fields: [contributorId], references: [id])
+  
+  // Can be attached to an annotation OR a circuit path
+  annotationId  String?
+  annotation    Annotation?    @relation(fields: [annotationId], references: [id], onDelete: Cascade)
+  circuitPathId String?
+  circuitPath   CircuitPath?   @relation(fields: [circuitPathId], references: [id], onDelete: Cascade)
+  
+  // Thread support (replies)
+  parentId      String?
+  parent        Comment?       @relation("CommentReplies", fields: [parentId], references: [id])
+  replies       Comment[]      @relation("CommentReplies")
+
+  @@map("comments")
+}
