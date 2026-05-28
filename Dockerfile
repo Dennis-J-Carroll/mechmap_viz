@@ -35,18 +35,15 @@ COPY --from=builder /app/public ./public
 # Prisma schema + migrations
 COPY --from=builder /app/prisma ./prisma
 
-# Copy the PINNED Prisma CLI and client from the build stage.
-# Do NOT use `npx prisma` at runtime — npx would download the latest version
-# (currently 7.x) which dropped support for `url = env("DATABASE_URL")`.
-COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
-COPY --from=builder /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
-COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+# Copy the FULL node_modules so all Prisma WASM binaries are present.
+# Partial copies (just .bin/prisma or node_modules/prisma) miss the
+# WASM files that the CLI requires at runtime.
+COPY --from=builder /app/node_modules ./node_modules
 
 RUN chown -R nextjs:nodejs /app
 USER nextjs
 
 EXPOSE 3000
 
-# Use local prisma binary (pinned 6.x) — never npx
+# Use pinned local prisma binary — never npx (downloads incompatible Prisma 7)
 CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy && node server.js"]
