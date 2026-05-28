@@ -4,8 +4,13 @@ import { IMPORTANCE_COLORS } from '@/types/transformer';
 import { cn } from '@/lib/utils';
 import { FilterPanel } from './FilterPanel';
 import { LayerNavigator } from './LayerNavigator';
+import { CircuitList } from './CircuitList';
 
-export function Legend() {
+interface LegendProps {
+  onNewCircuit?: () => void;
+}
+
+export function Legend({ onNewCircuit }: LegendProps = {}) {
   return (
     <div className="space-y-4">
       <div className="bg-slate-800/50 rounded-lg p-4 space-y-4">
@@ -56,6 +61,7 @@ export function Legend() {
       </div>
       <FilterPanel />
       <LayerNavigator />
+      <CircuitList onNewCircuit={onNewCircuit ?? (() => {})} />
     </div>
   );
 }

@@ -15,3 +15,5 @@ export { HeatmapView } from './HeatmapView';
 export { BatchToolbar } from './BatchToolbar';
 export { LayerNavigator } from './LayerNavigator';
 export { AutoBackupIndicator } from './AutoBackupIndicator';
+export { CircuitList } from './CircuitList';
+export { CircuitTemplates } from './CircuitTemplates';

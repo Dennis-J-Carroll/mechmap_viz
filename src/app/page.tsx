@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { TransformerVisualization, AnnotationPanel, ConfigPanel, Legend, Stats, ProjectSelector, LayeredNetworkIcon, UndoRedo, SearchBar, AutoBackupIndicator, MobileAnnotationDrawer } from '@/components/transformer';
+import { TransformerVisualization, AnnotationPanel, ConfigPanel, Legend, Stats, ProjectSelector, LayeredNetworkIcon, UndoRedo, SearchBar, AutoBackupIndicator, MobileAnnotationDrawer, CircuitTemplates } from '@/components/transformer';
 import { Button } from '@/components/ui/button';
 import { useTransformerStore } from '@/lib/store';
 import { useProjects } from '@/hooks/useProjects';
@@ -28,6 +28,7 @@ export default function Home() {
   const { currentProject } = useProjects();
   const isMobile = useIsMobile();
   const [mobileTab, setMobileTab] = useState<'viz' | 'notes' | 'stats'>('viz');
+  const [circuitModalOpen, setCircuitModalOpen] = useState(false);
 
   // Sync store when project changes
   useEffect(() => {
@@ -66,11 +67,13 @@ export default function Home() {
         setView(view === 'flow' ? 'heatmap' : 'flow');
       } else if ((e.key === 'b' || e.key === 'B') && !inInput) {
         toggleBatchMode();
+      } else if ((e.key === 'c' || e.key === 'C') && !inInput) {
+        setCircuitModalOpen(true);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [undo, redo, announce, view, setView, toggleBatchMode]);
+  }, [undo, redo, announce, view, setView, toggleBatchMode, setCircuitModalOpen]);
 
   return (
     <div className="min-h-screen bg-djc-navy text-slate-100 flex flex-col">
@@ -202,7 +205,7 @@ export default function Home() {
           className="w-64 border-r border-[rgba(0,188,212,0.1)] bg-[#0f1419]/30 hidden lg:block overflow-y-auto"
         >
           <div className="p-4 space-y-4">
-            <Legend />
+            <Legend onNewCircuit={() => setCircuitModalOpen(true)} />
             <Stats />
           </div>
         </aside>
@@ -229,7 +232,7 @@ export default function Home() {
         {/* Mobile: Stats tab content */}
         {isMobile && mobileTab === 'stats' && (
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            <Legend />
+            <Legend onNewCircuit={() => setCircuitModalOpen(true)} />
             <Stats />
           </div>
         )}
@@ -237,6 +240,8 @@ export default function Home() {
 
       {/* Mobile: Vaul annotation drawer */}
       {isMobile && <MobileAnnotationDrawer />}
+
+      <CircuitTemplates open={circuitModalOpen} onOpenChange={setCircuitModalOpen} />
 
       {/* Mobile tab bar */}
       {isMobile && (
