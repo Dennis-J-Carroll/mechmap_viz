@@ -41,6 +41,12 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  /* DJC custom colors for Tailwind utilities */
+  --color-djc-cyan: #00bcd4;
+  --color-djc-navy: #0a0e14;
+  --color-djc-surface: #0f1419;
+  --color-djc-violet: #7c4dff;
+  --color-djc-border: rgba(0, 188, 212, 0.15);
 }
 
 :root {
@@ -110,6 +116,16 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+}
+
+/* DJC design system overrides — appended after .dark block */
+:root,
+.dark {
+  --primary: #00bcd4;           /* DJC cyan */
+  --primary-foreground: #0a0e14;
+  --ring: #00bcd4;
+  --background: #0a0e14;        /* DJC navy */
+  --card: #0f1419;
 }
 
 @layer base {

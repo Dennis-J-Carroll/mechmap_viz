@@ -7,3 +7,4 @@ export { ConfigPanel } from './ConfigPanel';
 export { Legend } from './Legend';
 export { Stats } from './Stats';
 export { ProjectSelector } from './ProjectSelector';
+export { LayeredNetworkIcon } from './LayeredNetworkIcon';

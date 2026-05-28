@@ -5,7 +5,8 @@ import { TransformerVisualization, AnnotationPanel, ConfigPanel, Legend, Stats, 
 import { Button } from '@/components/ui/button';
 import { useTransformerStore } from '@/lib/store';
 import { useProjects } from '@/hooks/useProjects';
-import { Brain, Github, HelpCircle } from 'lucide-react';
+import { Github, HelpCircle } from 'lucide-react';
+import { LayeredNetworkIcon } from '@/components/transformer';
 import {
   Tooltip,
   TooltipContent,
@@ -31,12 +32,12 @@ export default function Home() {
   }, [currentProject, syncFromProject]);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+    <div className="min-h-screen bg-[#0a0e14] text-slate-100 flex flex-col">
       {/* Header */}
-      <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-sm sticky top-0 z-50">
+      <header className="border-b border-[rgba(0,188,212,0.15)] bg-[#0f1419]/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Brain className="w-6 h-6 text-primary" />
+            <LayeredNetworkIcon className="w-6 h-6 text-primary" />
             <h1 className="text-lg font-bold">Mech Interp Viz</h1>
             <span className="text-xs text-slate-500 hidden sm:inline">
               Mechanistic Interpretability Visualization
