@@ -3,7 +3,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useTransformerStore } from '@/lib/store';
 import { useProjects } from '@/hooks/useProjects';
-import { PREDEFINED_TAGS, ImportanceLevel, Annotation } from '@/types/transformer';
+import { PREDEFINED_TAGS, ImportanceLevel, Annotation, SelectedComponent } from '@/types/transformer';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
@@ -38,7 +38,7 @@ function AnnotationForm({
   existingAnnotation
 }: { 
   componentKey: string;
-  selectedComponent: NonNullable<ReturnType<typeof useTransformerStore>['selectedComponent']>;
+  selectedComponent: SelectedComponent;
   existingAnnotation?: Annotation;
 }) {
   const { addAnnotation, updateAnnotation, deleteAnnotation: localDeleteAnnotation, pushSnapshot } = useTransformerStore();

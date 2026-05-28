@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback } from 'react';
+import type { ReactNode } from 'react';
 import { X, Layers, Trash2 } from 'lucide-react';
 import {
   DndContext,
@@ -10,12 +11,19 @@ import {
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
-import type { DragEndEvent } from '@dnd-kit/core';
+import type { DragEndEvent, UniqueIdentifier } from '@dnd-kit/core';
 import {
-  SortableContext,
+  SortableContext as SortableContextBase,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
+import type { SortableContextProps } from '@dnd-kit/sortable';
+
+// React 19 compatibility: SortableContext returns JSX.Element which doesn't
+// satisfy ReactNode in React 19's stricter types. Cast via a typed wrapper.
+const SortableContext = SortableContextBase as (
+  props: SortableContextProps & { children: ReactNode }
+) => ReactNode;
 import { useTransformerStore } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
