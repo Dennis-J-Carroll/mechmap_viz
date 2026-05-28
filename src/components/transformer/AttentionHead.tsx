@@ -11,7 +11,7 @@ interface AttentionHeadProps {
 }
 
 export function AttentionHead({ layerIndex, headIndex }: AttentionHeadProps) {
-  const { selectedComponent, setSelectedComponent, annotations, getAnnotationKey } = useTransformerStore();
+  const { selectedComponent, setSelectedComponent, annotations, getAnnotationKey, matchingKeys, filterQuery, filterImportance, filterTags } = useTransformerStore();
   
   const componentId: SelectedComponent = {
     type: 'attention_head',
@@ -24,6 +24,9 @@ export function AttentionHead({ layerIndex, headIndex }: AttentionHeadProps) {
   const isSelected = selectedComponent?.type === 'attention_head' &&
     selectedComponent.layerIndex === layerIndex &&
     selectedComponent.headIndex === headIndex;
+
+  const hasActiveFilters = !!(filterQuery || filterImportance.length > 0 || filterTags.length > 0);
+  const isFiltered = hasActiveFilters && !!annotation && !matchingKeys.has(key);
 
   const importanceColors = annotation ? IMPORTANCE_COLORS[annotation.importance] : null;
 
@@ -54,6 +57,8 @@ export function AttentionHead({ layerIndex, headIndex }: AttentionHeadProps) {
               isSelected && 'ring-2 ring-primary ring-offset-2 ring-offset-background scale-110',
               // Has notes indicator
               annotation?.notes && 'after:absolute after:-top-0.5 after:-right-0.5 after:w-2 after:h-2 after:bg-white after:rounded-full',
+              // Filter dim
+              isFiltered && 'opacity-20 pointer-events-none',
             )}
           >
             <span className="text-[8px] font-mono text-slate-300">

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { TransformerVisualization, AnnotationPanel, ConfigPanel, Legend, Stats, ProjectSelector, LayeredNetworkIcon, UndoRedo } from '@/components/transformer';
+import { TransformerVisualization, AnnotationPanel, ConfigPanel, Legend, Stats, ProjectSelector, LayeredNetworkIcon, UndoRedo, SearchBar } from '@/components/transformer';
 import { Button } from '@/components/ui/button';
 import { useTransformerStore } from '@/lib/store';
 import { useProjects } from '@/hooks/useProjects';
@@ -57,6 +57,7 @@ export default function Home() {
             <span className="text-xs text-slate-500 hidden sm:inline">
               Mechanistic Interpretability Visualization
             </span>
+            <SearchBar />
           </div>
           
           <div className="flex items-center gap-2">

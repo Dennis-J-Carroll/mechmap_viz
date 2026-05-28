@@ -49,6 +49,17 @@ interface TransformerStore {
   pushSnapshot: () => void;
   undo: () => void;
   redo: () => void;
+
+  // Filter slice
+  filterQuery: string;
+  filterImportance: string[];
+  filterTags: string[];
+  matchingKeys: Set<string>;
+  setFilterQuery: (q: string) => void;
+  toggleFilterImportance: (level: string) => void;
+  toggleFilterTag: (tag: string) => void;
+  clearFilters: () => void;
+  applyFilters: () => void;
 }
 
 // Helper to generate unique key for a component
@@ -244,6 +255,70 @@ export const useTransformerStore = create<TransformerStore>()(
           isDirty: currentProject !== null,
         });
         set({ isRestoring: false });
+      },
+
+      // Filter slice
+      filterQuery: '',
+      filterImportance: [],
+      filterTags: [],
+      matchingKeys: new Set<string>(),
+
+      setFilterQuery: (q) => {
+        set({ filterQuery: q });
+        get().applyFilters();
+      },
+
+      toggleFilterImportance: (level) => {
+        const current = get().filterImportance;
+        const next = current.includes(level)
+          ? current.filter((l) => l !== level)
+          : [...current, level];
+        set({ filterImportance: next });
+        get().applyFilters();
+      },
+
+      toggleFilterTag: (tag) => {
+        const current = get().filterTags;
+        const next = current.includes(tag)
+          ? current.filter((t) => t !== tag)
+          : [...current, tag];
+        set({ filterTags: next });
+        get().applyFilters();
+      },
+
+      clearFilters: () => {
+        set({ filterQuery: '', filterImportance: [], filterTags: [], matchingKeys: new Set() });
+      },
+
+      applyFilters: () => {
+        const { annotations, filterQuery, filterImportance, filterTags } = get();
+        const hasQuery = filterQuery.trim().length > 0;
+        const hasImportance = filterImportance.length > 0;
+        const hasTag = filterTags.length > 0;
+
+        if (!hasQuery && !hasImportance && !hasTag) {
+          set({ matchingKeys: new Set(Object.keys(annotations)) });
+          return;
+        }
+
+        const query = filterQuery.toLowerCase().trim();
+        const matches = new Set<string>();
+
+        for (const [key, ann] of Object.entries(annotations)) {
+          let ok = true;
+          if (hasQuery) {
+            const searchable = [key, ...ann.tags, ann.notes].join(' ').toLowerCase();
+            ok = ok && searchable.includes(query);
+          }
+          if (ok && hasImportance) {
+            ok = filterImportance.includes(ann.importance);
+          }
+          if (ok && hasTag) {
+            ok = ann.tags.some((t) => filterTags.includes(t));
+          }
+          if (ok) matches.add(key);
+        }
+        set({ matchingKeys: matches });
       },
     }),
     {

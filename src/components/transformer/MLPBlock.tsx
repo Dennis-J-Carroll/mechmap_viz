@@ -10,7 +10,7 @@ interface MLPBlockProps {
 }
 
 export function MLPBlock({ layerIndex }: MLPBlockProps) {
-  const { selectedComponent, setSelectedComponent, annotations, getAnnotationKey } = useTransformerStore();
+  const { selectedComponent, setSelectedComponent, annotations, getAnnotationKey, matchingKeys, filterQuery, filterImportance, filterTags } = useTransformerStore();
   
   const componentId: SelectedComponent = {
     type: 'mlp',
@@ -21,6 +21,9 @@ export function MLPBlock({ layerIndex }: MLPBlockProps) {
   const annotation = annotations[key];
   const isSelected = selectedComponent?.type === 'mlp' &&
     selectedComponent.layerIndex === layerIndex;
+
+  const hasActiveFilters = !!(filterQuery || filterImportance.length > 0 || filterTags.length > 0);
+  const isFiltered = hasActiveFilters && !!annotation && !matchingKeys.has(key);
 
   const importanceColors = annotation ? IMPORTANCE_COLORS[annotation.importance] : null;
 
@@ -51,6 +54,8 @@ export function MLPBlock({ layerIndex }: MLPBlockProps) {
               isSelected && 'ring-2 ring-primary ring-offset-2 ring-offset-background scale-105',
               // Has notes indicator
               annotation?.notes && 'after:absolute after:-top-0.5 after:-right-0.5 after:w-2 after:h-2 after:bg-white after:rounded-full',
+              // Filter dim
+              isFiltered && 'opacity-20 pointer-events-none',
             )}
           >
             <span className="text-xs font-mono text-slate-300">

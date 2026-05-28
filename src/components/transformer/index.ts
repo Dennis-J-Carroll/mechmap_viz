@@ -9,3 +9,5 @@ export { Stats } from './Stats';
 export { ProjectSelector } from './ProjectSelector';
 export { LayeredNetworkIcon } from './LayeredNetworkIcon';
 export { UndoRedo } from './UndoRedo';
+export { SearchBar } from './SearchBar';
+export { FilterPanel } from './FilterPanel';
