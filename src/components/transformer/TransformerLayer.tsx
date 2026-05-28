@@ -15,21 +15,25 @@ export function TransformerLayer({ layerIndex, isLast }: TransformerLayerProps) 
   const { numHeadsPerLayer } = config;
 
   return (
-    <div className="flex flex-col items-center gap-2">
+    <div id={`layer-${layerIndex}`} className="flex flex-col items-center gap-2">
       {/* Layer label */}
       <div className="flex items-center justify-between w-full px-2">
-        <span className="text-xs font-mono text-slate-500">
+        <span id={`layer-label-${layerIndex}`} className="text-xs font-mono text-slate-500">
           Layer {layerIndex}
         </span>
       </div>
 
       {/* Layer container */}
-      <div className={cn(
-        'relative flex flex-col items-center gap-3 p-4 rounded-lg',
-        'bg-slate-800/50 border border-slate-700',
-        'transition-all duration-300 hover:border-slate-600',
-        'w-full max-w-sm'
-      )}>
+      <div
+        role="group"
+        aria-labelledby={`layer-label-${layerIndex}`}
+        className={cn(
+          'relative flex flex-col items-center gap-3 p-4 rounded-lg',
+          'bg-slate-800/50 border border-slate-700',
+          'transition-all duration-300 hover:border-slate-600',
+          'w-full max-w-sm'
+        )}
+      >
         {/* Attention heads grid */}
         <div className="flex flex-col items-center gap-1">
           <span className="text-[10px] uppercase tracking-wider text-slate-500 mb-1">

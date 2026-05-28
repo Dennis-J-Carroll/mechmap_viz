@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { TransformerVisualization, AnnotationPanel, ConfigPanel, Legend, Stats, ProjectSelector, LayeredNetworkIcon, UndoRedo, SearchBar } from '@/components/transformer';
 import { Button } from '@/components/ui/button';
 import { useTransformerStore } from '@/lib/store';
@@ -30,26 +30,44 @@ export default function Home() {
     syncFromProject(currentProject);
   }, [currentProject, syncFromProject]);
 
-  // Global Ctrl+Z / Ctrl+Shift+Z handler
+  // Announce helper for screen readers
+  const announce = useCallback((msg: string) => {
+    const el = document.getElementById('sr-live');
+    if (el) {
+      el.textContent = msg;
+      setTimeout(() => { el.textContent = ''; }, 1000);
+    }
+  }, []);
+
+  // Global Ctrl+Z / Ctrl+Shift+Z / Ctrl+S handler
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const isCtrl = e.ctrlKey || e.metaKey;
+      const target = e.target as HTMLElement;
+      const inInput = ['INPUT', 'TEXTAREA'].includes(target.tagName);
+
       if (isCtrl && e.key === 'z' && !e.shiftKey) {
         e.preventDefault();
         undo();
+        announce('Undo');
       } else if (isCtrl && e.key === 'z' && e.shiftKey) {
         e.preventDefault();
         redo();
+        announce('Redo');
+      } else if (isCtrl && e.key === 's') {
+        e.preventDefault();
+        const saveBtn = document.querySelector<HTMLButtonElement>('[data-save-annotation]');
+        saveBtn?.click();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [undo, redo]);
+  }, [undo, redo, announce]);
 
   return (
     <div className="min-h-screen bg-djc-navy text-slate-100 flex flex-col">
       {/* Header */}
-      <header className="border-b border-djc-border bg-djc-surface/80 backdrop-blur-sm sticky top-0 z-50">
+      <header role="banner" className="border-b border-djc-border bg-djc-surface/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <LayeredNetworkIcon className="w-6 h-6 text-primary" />
@@ -137,7 +155,11 @@ export default function Home() {
       {/* Main Content */}
       <main className="flex-1 flex overflow-hidden">
         {/* Left Sidebar - Legend & Stats */}
-        <aside className="w-64 border-r border-slate-800 bg-slate-900/30 hidden lg:block overflow-y-auto">
+        <aside
+          role="complementary"
+          aria-label="Legend and statistics"
+          className="w-64 border-r border-slate-800 bg-slate-900/30 hidden lg:block overflow-y-auto"
+        >
           <div className="p-4 space-y-4">
             <Legend />
             <Stats />
@@ -145,12 +167,20 @@ export default function Home() {
         </aside>
 
         {/* Center - Visualization */}
-        <div className={`flex-1 overflow-hidden transition-all duration-300 ${isPanelOpen ? 'mr-0' : ''}`}>
+        <div
+          role="main"
+          aria-label="Transformer architecture visualization"
+          className={`flex-1 overflow-hidden transition-all duration-300 ${isPanelOpen ? 'mr-0' : ''}`}
+        >
           <TransformerVisualization />
         </div>
 
         {/* Right Sidebar - Annotation Panel */}
-        <div className={`${isPanelOpen ? 'block' : 'hidden'}`}>
+        <div
+          role="complementary"
+          aria-label="Annotation panel"
+          className={`${isPanelOpen ? 'block' : 'hidden'}`}
+        >
           <AnnotationPanel />
         </div>
       </main>
@@ -166,6 +196,14 @@ export default function Home() {
           </span>
         </div>
       </footer>
+
+      {/* ARIA live region for screen reader announcements */}
+      <div
+        id="sr-live"
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+      />
     </div>
   );
 }

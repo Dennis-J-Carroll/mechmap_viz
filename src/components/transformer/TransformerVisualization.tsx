@@ -1,5 +1,6 @@
 'use client';
 
+import { useCallback, useEffect, useRef } from 'react';
 import { useTransformerStore } from '@/lib/store';
 import { TransformerLayer } from './TransformerLayer';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -8,6 +9,65 @@ import { cn } from '@/lib/utils';
 export function TransformerVisualization() {
   const { config } = useTransformerStore();
   const { numLayers, modelName } = config;
+  const kbFocus = useRef({ layer: 0, head: 0, isMlp: false });
+
+  const focusComponent = useCallback(() => {
+    const { layer, head, isMlp } = kbFocus.current;
+    const selector = isMlp
+      ? `#layer-${layer} button[aria-label^="Layer ${layer}, MLP"]`
+      : `#layer-${layer} button[aria-label^="Layer ${layer}, Head ${head}"]`;
+    const btn = document.querySelector<HTMLButtonElement>(selector);
+    btn?.focus();
+    btn?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeEl = document.activeElement;
+      const inViz = activeEl?.closest('[role="main"]');
+      if (!inViz) return;
+
+      const { numLayers: layers, numHeadsPerLayer: heads } = config;
+      const kb = kbFocus.current;
+
+      switch (e.key) {
+        case 'ArrowUp':
+          e.preventDefault();
+          kb.layer = Math.max(0, kb.layer - 1);
+          focusComponent();
+          break;
+        case 'ArrowDown':
+          e.preventDefault();
+          kb.layer = Math.min(layers - 1, kb.layer + 1);
+          focusComponent();
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          if (!kb.isMlp && kb.head < heads - 1) {
+            kb.head++;
+          } else if (!kb.isMlp) {
+            kb.isMlp = true;
+          }
+          focusComponent();
+          break;
+        case 'ArrowLeft':
+          e.preventDefault();
+          if (kb.isMlp) {
+            kb.isMlp = false;
+            kb.head = heads - 1;
+          } else {
+            kb.head = Math.max(0, kb.head - 1);
+          }
+          focusComponent();
+          break;
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [config, focusComponent]);
+
+  // NOTE: if view is 'heatmap', TransformerVisualization currently shows flow.
+  // view check will be added in Task 6. For now, always render flow view.
 
   return (
     <div className="flex flex-col items-center h-full">

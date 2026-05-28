@@ -37,6 +37,12 @@ export function MLPBlock({ layerIndex }: MLPBlockProps) {
         <TooltipTrigger asChild>
           <button
             onClick={handleClick}
+            aria-label={`Layer ${layerIndex}, MLP${
+              annotation
+                ? ` — ${annotation.importance}${annotation.tags.length > 0 ? ` — ${annotation.tags.join(', ')}` : ''}`
+                : ' — unannotated'
+            }`}
+            aria-pressed={isSelected}
             className={cn(
               'relative w-16 h-10 rounded-md transition-all duration-200',
               'border-2 flex items-center justify-center',

@@ -40,6 +40,12 @@ export function AttentionHead({ layerIndex, headIndex }: AttentionHeadProps) {
         <TooltipTrigger asChild>
           <button
             onClick={handleClick}
+            aria-label={`Layer ${layerIndex}, Head ${headIndex}${
+              annotation
+                ? ` — ${annotation.importance}${annotation.tags.length > 0 ? ` — ${annotation.tags.join(', ')}` : ''}`
+                : ' — unannotated'
+            }`}
+            aria-pressed={isSelected}
             className={cn(
               'relative w-7 h-7 rounded-full transition-all duration-200',
               'border-2 flex items-center justify-center',

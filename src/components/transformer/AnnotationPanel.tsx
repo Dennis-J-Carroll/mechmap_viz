@@ -265,7 +265,7 @@ function AnnotationForm({
 
       {/* Actions */}
       <div className="flex gap-2">
-        <Button onClick={handleSave} className="flex-1" disabled={isSaving}>
+        <Button onClick={handleSave} className="flex-1" disabled={isSaving} data-save-annotation="">
           {isSaving ? 'Saving...' : 'Save Annotation'}
         </Button>
         {existingAnnotation && (
