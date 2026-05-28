@@ -27,6 +27,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { Drawer } from 'vaul';
 
 // Internal form component that manages its own state
 // Key prop from parent causes remount when selection changes, resetting state
@@ -308,7 +309,11 @@ function AnnotationForm({
   );
 }
 
-export function AnnotationPanel() {
+interface AnnotationPanelProps {
+  embedded?: boolean;
+}
+
+export function AnnotationPanel({ embedded = false }: AnnotationPanelProps) {
   const {
     selectedComponent,
     annotations,
@@ -323,12 +328,12 @@ export function AnnotationPanel() {
   const [importError, setImportError] = useState('');
 
   // Get current annotation - memoized
-  const key = useMemo(() => 
+  const key = useMemo(() =>
     selectedComponent ? getAnnotationKey(selectedComponent) : null,
     [selectedComponent, getAnnotationKey]
   );
-  
-  const currentAnnotation = useMemo(() => 
+
+  const currentAnnotation = useMemo(() =>
     key ? annotations[key] : undefined,
     [key, annotations]
   );
@@ -364,6 +369,84 @@ export function AnnotationPanel() {
     event.target.value = '';
   }, [importAnnotations]);
 
+  // Shared content and footer used in both normal and embedded modes
+  const panelContent = (
+    <div className="p-4 space-y-4">
+      {!currentProject && (
+        <div className="flex items-center gap-2 text-xs text-amber-400 bg-amber-500/10 rounded p-2">
+          <CloudOff className="h-3 w-3" />
+          No project loaded. Changes saved locally only.
+        </div>
+      )}
+
+      {selectedComponent && key ? (
+        <AnnotationForm
+          key={key} // Key causes remount when selection changes
+          componentKey={key}
+          selectedComponent={selectedComponent}
+          existingAnnotation={currentAnnotation}
+        />
+      ) : (
+        <div className="text-center py-8 text-slate-500">
+          <p>Click on a component to view or add annotations</p>
+        </div>
+      )}
+    </div>
+  );
+
+  const panelFooter = (
+    <div className="p-4 border-t border-slate-800 space-y-2">
+      {importError && (
+        <p className="text-xs text-red-500">{importError}</p>
+      )}
+      <div className="flex gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleExport}
+          className="flex-1"
+        >
+          <Download className="h-3 w-3 mr-1" />
+          Export Local
+        </Button>
+        <label className="flex-1">
+          <input
+            type="file"
+            accept=".json"
+            onChange={handleImport}
+            className="hidden"
+          />
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full"
+            asChild
+          >
+            <span>
+              <Upload className="h-3 w-3 mr-1" />
+              Import
+            </span>
+          </Button>
+        </label>
+      </div>
+      <p className="text-xs text-slate-500 text-center">
+        Use Projects for database sync
+      </p>
+    </div>
+  );
+
+  // Embedded mode: skip outer container and header (used inside MobileAnnotationDrawer)
+  if (embedded) {
+    return (
+      <>
+        <ScrollArea className="flex-1">
+          {panelContent}
+        </ScrollArea>
+        {panelFooter}
+      </>
+    );
+  }
+
   if (!isPanelOpen) {
     return (
       <div className="fixed right-0 top-0 h-full w-12 flex items-center justify-center bg-slate-900 border-l border-slate-800">
@@ -395,68 +478,34 @@ export function AnnotationPanel() {
 
       {/* Content */}
       <ScrollArea className="flex-1">
-        <div className="p-4 space-y-4">
-          {!currentProject && (
-            <div className="flex items-center gap-2 text-xs text-amber-400 bg-amber-500/10 rounded p-2">
-              <CloudOff className="h-3 w-3" />
-              No project loaded. Changes saved locally only.
-            </div>
-          )}
-          
-          {selectedComponent && key ? (
-            <AnnotationForm 
-              key={key} // Key causes remount when selection changes
-              componentKey={key}
-              selectedComponent={selectedComponent}
-              existingAnnotation={currentAnnotation}
-            />
-          ) : (
-            <div className="text-center py-8 text-slate-500">
-              <p>Click on a component to view or add annotations</p>
-            </div>
-          )}
-        </div>
+        {panelContent}
       </ScrollArea>
 
       {/* Export/Import Footer */}
-      <div className="p-4 border-t border-slate-800 space-y-2">
-        {importError && (
-          <p className="text-xs text-red-500">{importError}</p>
-        )}
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExport}
-            className="flex-1"
-          >
-            <Download className="h-3 w-3 mr-1" />
-            Export Local
-          </Button>
-          <label className="flex-1">
-            <input
-              type="file"
-              accept=".json"
-              onChange={handleImport}
-              className="hidden"
-            />
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full"
-              asChild
-            >
-              <span>
-                <Upload className="h-3 w-3 mr-1" />
-                Import
-              </span>
-            </Button>
-          </label>
-        </div>
-        <p className="text-xs text-slate-500 text-center">
-          Use Projects for database sync
-        </p>
-      </div>
+      {panelFooter}
     </div>
+  );
+}
+
+export function MobileAnnotationDrawer() {
+  const { isPanelOpen, setPanelOpen } = useTransformerStore();
+
+  return (
+    <Drawer.Root open={isPanelOpen} onOpenChange={setPanelOpen}>
+      <Drawer.Portal>
+        <Drawer.Overlay className="fixed inset-0 bg-black/40 z-40" />
+        <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 bg-slate-900 border-t border-slate-800 rounded-t-xl flex flex-col max-h-[80vh]">
+          <div className="flex items-center justify-center pt-3 pb-2">
+            <div className="w-10 h-1 rounded-full bg-slate-700" />
+          </div>
+          <div className="px-4 pb-2 border-b border-slate-800">
+            <h2 className="font-semibold text-lg">Annotations</h2>
+          </div>
+          <div className="overflow-y-auto flex-1 flex flex-col">
+            <AnnotationPanel embedded />
+          </div>
+        </Drawer.Content>
+      </Drawer.Portal>
+    </Drawer.Root>
   );
 }

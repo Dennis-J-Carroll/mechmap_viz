@@ -1,11 +1,12 @@
 'use client';
 
-import { useCallback, useEffect } from 'react';
-import { TransformerVisualization, AnnotationPanel, ConfigPanel, Legend, Stats, ProjectSelector, LayeredNetworkIcon, UndoRedo, SearchBar, AutoBackupIndicator } from '@/components/transformer';
+import { useCallback, useEffect, useState } from 'react';
+import { TransformerVisualization, AnnotationPanel, ConfigPanel, Legend, Stats, ProjectSelector, LayeredNetworkIcon, UndoRedo, SearchBar, AutoBackupIndicator, MobileAnnotationDrawer } from '@/components/transformer';
 import { Button } from '@/components/ui/button';
 import { useTransformerStore } from '@/lib/store';
 import { useProjects } from '@/hooks/useProjects';
-import { Github, HelpCircle, LayoutGrid, AlignJustify, Layers } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { Github, HelpCircle, LayoutGrid, AlignJustify, Layers, PenLine, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Tooltip,
@@ -23,8 +24,10 @@ import {
 } from '@/components/ui/dialog';
 
 export default function Home() {
-  const { isPanelOpen, syncFromProject, undo, redo, view, setView, batchMode, toggleBatchMode } = useTransformerStore();
+  const { isPanelOpen, setPanelOpen, syncFromProject, undo, redo, view, setView, batchMode, toggleBatchMode } = useTransformerStore();
   const { currentProject } = useProjects();
+  const isMobile = useIsMobile();
+  const [mobileTab, setMobileTab] = useState<'viz' | 'notes' | 'stats'>('viz');
 
   // Sync store when project changes
   useEffect(() => {
@@ -192,11 +195,11 @@ export default function Home() {
 
       {/* Main Content */}
       <main className="flex-1 flex overflow-hidden">
-        {/* Left Sidebar - Legend & Stats */}
+        {/* Left Sidebar — hidden on mobile and tablet */}
         <aside
           role="complementary"
           aria-label="Legend and statistics"
-          className="w-64 border-r border-slate-800 bg-slate-900/30 hidden lg:block overflow-y-auto"
+          className="w-64 border-r border-[rgba(0,188,212,0.1)] bg-[#0f1419]/30 hidden lg:block overflow-y-auto"
         >
           <div className="p-4 space-y-4">
             <Legend />
@@ -204,24 +207,66 @@ export default function Home() {
           </div>
         </aside>
 
-        {/* Center - Visualization */}
+        {/* Center — Visualization (hidden on mobile when on stats tab) */}
         <div
           role="main"
           aria-label="Transformer architecture visualization"
-          className={`flex-1 overflow-hidden transition-all duration-300 ${isPanelOpen ? 'mr-0' : ''}`}
+          className={cn(
+            'flex-1 overflow-hidden transition-all duration-300',
+            isMobile && mobileTab === 'stats' ? 'hidden' : ''
+          )}
         >
           <TransformerVisualization />
         </div>
 
-        {/* Right Sidebar - Annotation Panel */}
-        <div
-          role="complementary"
-          aria-label="Annotation panel"
-          className={`${isPanelOpen ? 'block' : 'hidden'}`}
-        >
-          <AnnotationPanel />
-        </div>
+        {/* Right panel — hidden on mobile (use drawer instead) */}
+        {!isMobile && isPanelOpen && (
+          <div role="complementary" aria-label="Annotation panel">
+            <AnnotationPanel />
+          </div>
+        )}
+
+        {/* Mobile: Stats tab content */}
+        {isMobile && mobileTab === 'stats' && (
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <Legend />
+            <Stats />
+          </div>
+        )}
       </main>
+
+      {/* Mobile: Vaul annotation drawer */}
+      {isMobile && <MobileAnnotationDrawer />}
+
+      {/* Mobile tab bar */}
+      {isMobile && (
+        <nav
+          className="border-t border-[rgba(0,188,212,0.15)] bg-[#0f1419] flex items-center justify-around py-2"
+          aria-label="Mobile navigation"
+        >
+          {[
+            { id: 'viz' as const, icon: <LayoutGrid className="h-5 w-5" />, label: 'Viz' },
+            { id: 'notes' as const, icon: <PenLine className="h-5 w-5" />, label: 'Notes' },
+            { id: 'stats' as const, icon: <BarChart3 className="h-5 w-5" />, label: 'Stats' },
+          ].map(({ id, icon, label }) => (
+            <button
+              key={id}
+              onClick={() => {
+                setMobileTab(id);
+                if (id === 'notes') setPanelOpen(true);
+              }}
+              className={cn(
+                'flex flex-col items-center gap-0.5 px-4 py-1 rounded-lg transition-colors',
+                mobileTab === id ? 'text-[#00bcd4]' : 'text-slate-500 hover:text-slate-300'
+              )}
+              aria-current={mobileTab === id ? 'page' : undefined}
+            >
+              {icon}
+              <span className="text-[10px]">{label}</span>
+            </button>
+          ))}
+        </nav>
+      )}
 
       {/* Footer */}
       <footer className="border-t border-[rgba(0,188,212,0.1)] bg-[#0f1419]/30 py-2">
