@@ -125,6 +125,10 @@ model PathNode {
   signalType    String?        // What signal flows: 'positional', 'content', 'name', 'fact', etc.
   notes         String?        // Component-specific notes within this circuit context
   
+  connectionType  String?        // 'and' | 'or' — edge FROM this node TO the next
+  denoisingScore  Float?         // 0.0–1.0 — tests sufficiency (clean→corrupt patching)
+  noisingScore    Float?         // 0.0–1.0 — tests necessity (corrupt→clean patching)
+
   // Optional link to an annotation for this component
   annotationId  String?
   annotation    Annotation?    @relation(fields: [annotationId], references: [id])

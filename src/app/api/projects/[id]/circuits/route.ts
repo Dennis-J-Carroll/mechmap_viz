@@ -82,6 +82,9 @@ export async function POST(
                             role?: string;
                             signalType?: string;
                             notes?: string;
+                            connectionType?: string;
+                            denoisingScore?: number;
+                            noisingScore?: number;
                         }) => ({
                             position: node.position,
                             componentType: node.componentType,
@@ -90,6 +93,9 @@ export async function POST(
                             role: node.role,
                             signalType: node.signalType,
                             notes: node.notes,
+                            connectionType: node.connectionType,
+                            denoisingScore: node.denoisingScore,
+                            noisingScore: node.noisingScore,
                         })),
                     }
                     : undefined,
