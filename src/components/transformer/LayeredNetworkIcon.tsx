@@ -11,17 +11,18 @@ export function LayeredNetworkIcon({ className }: LayeredNetworkIconProps) {
       stroke="currentColor"
       strokeWidth={1.5}
       strokeLinecap="round"
+      aria-hidden="true"
       className={className}
     >
       {/* Input layer */}
-      <circle cx={3} cy={8} r={1.8} fill="currentColor" fillOpacity={0.15} />
-      <circle cx={3} cy={16} r={1.8} fill="currentColor" fillOpacity={0.15} />
+      <circle cx={3} cy={8} r={1.8} fill="currentColor" fillOpacity={0.15} stroke="none" />
+      <circle cx={3} cy={16} r={1.8} fill="currentColor" fillOpacity={0.15} stroke="none" />
       {/* Hidden layer */}
-      <circle cx={12} cy={5} r={1.8} fill="currentColor" fillOpacity={0.1} />
-      <circle cx={12} cy={12} r={1.8} fill="currentColor" fillOpacity={0.25} />
-      <circle cx={12} cy={19} r={1.8} fill="currentColor" fillOpacity={0.1} />
+      <circle cx={12} cy={5} r={1.8} fill="currentColor" fillOpacity={0.1} stroke="none" />
+      <circle cx={12} cy={12} r={1.8} fill="currentColor" fillOpacity={0.25} stroke="none" />
+      <circle cx={12} cy={19} r={1.8} fill="currentColor" fillOpacity={0.1} stroke="none" />
       {/* Output layer */}
-      <circle cx={21} cy={12} r={1.8} fill="currentColor" fillOpacity={0.15} />
+      <circle cx={21} cy={12} r={1.8} fill="currentColor" fillOpacity={0.15} stroke="none" />
       {/* Input → hidden connections */}
       <line x1={4.8} y1={8} x2={10.2} y2={5.5} strokeOpacity={0.6} strokeWidth={1} />
       <line x1={4.8} y1={8.5} x2={10.2} y2={12} strokeOpacity={0.9} strokeWidth={1.2} />

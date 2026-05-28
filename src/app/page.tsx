@@ -1,12 +1,11 @@
 'use client';
 
 import { useEffect } from 'react';
-import { TransformerVisualization, AnnotationPanel, ConfigPanel, Legend, Stats, ProjectSelector } from '@/components/transformer';
+import { TransformerVisualization, AnnotationPanel, ConfigPanel, Legend, Stats, ProjectSelector, LayeredNetworkIcon } from '@/components/transformer';
 import { Button } from '@/components/ui/button';
 import { useTransformerStore } from '@/lib/store';
 import { useProjects } from '@/hooks/useProjects';
 import { Github, HelpCircle } from 'lucide-react';
-import { LayeredNetworkIcon } from '@/components/transformer';
 import {
   Tooltip,
   TooltipContent,
@@ -32,9 +31,9 @@ export default function Home() {
   }, [currentProject, syncFromProject]);
 
   return (
-    <div className="min-h-screen bg-[#0a0e14] text-slate-100 flex flex-col">
+    <div className="min-h-screen bg-djc-navy text-slate-100 flex flex-col">
       {/* Header */}
-      <header className="border-b border-[rgba(0,188,212,0.15)] bg-[#0f1419]/80 backdrop-blur-sm sticky top-0 z-50">
+      <header className="border-b border-djc-border bg-djc-surface/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <LayeredNetworkIcon className="w-6 h-6 text-primary" />
