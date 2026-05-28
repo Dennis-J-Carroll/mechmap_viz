@@ -13,3 +13,5 @@ export { SearchBar } from './SearchBar';
 export { FilterPanel } from './FilterPanel';
 export { HeatmapView } from './HeatmapView';
 export { BatchToolbar } from './BatchToolbar';
+export { LayerNavigator } from './LayerNavigator';
+export { AutoBackupIndicator } from './AutoBackupIndicator';

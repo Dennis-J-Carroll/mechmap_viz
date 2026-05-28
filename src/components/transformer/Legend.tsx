@@ -3,6 +3,7 @@
 import { IMPORTANCE_COLORS } from '@/types/transformer';
 import { cn } from '@/lib/utils';
 import { FilterPanel } from './FilterPanel';
+import { LayerNavigator } from './LayerNavigator';
 
 export function Legend() {
   return (
@@ -54,6 +55,7 @@ export function Legend() {
         </div>
       </div>
       <FilterPanel />
+      <LayerNavigator />
     </div>
   );
 }

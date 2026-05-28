@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect } from 'react';
-import { TransformerVisualization, AnnotationPanel, ConfigPanel, Legend, Stats, ProjectSelector, LayeredNetworkIcon, UndoRedo, SearchBar } from '@/components/transformer';
+import { TransformerVisualization, AnnotationPanel, ConfigPanel, Legend, Stats, ProjectSelector, LayeredNetworkIcon, UndoRedo, SearchBar, AutoBackupIndicator } from '@/components/transformer';
 import { Button } from '@/components/ui/button';
 import { useTransformerStore } from '@/lib/store';
 import { useProjects } from '@/hooks/useProjects';
@@ -224,14 +224,10 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-800 bg-slate-900/30 py-2">
+      <footer className="border-t border-[rgba(0,188,212,0.1)] bg-[#0f1419]/30 py-2">
         <div className="container mx-auto px-4 flex items-center justify-between text-xs text-slate-500">
-          <span>Mech Interp Viz - Tool for Mechanistic Interpretability Research</span>
-          <span>
-            {currentProject 
-              ? `Project: ${currentProject.name}` 
-              : 'Local mode - Create a project to save to database'}
-          </span>
+          <span>Mech Interp Viz — Mechanistic Interpretability Research</span>
+          <AutoBackupIndicator />
         </div>
       </footer>
 
