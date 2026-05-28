@@ -11,7 +11,7 @@ interface AttentionHeadProps {
 }
 
 export function AttentionHead({ layerIndex, headIndex }: AttentionHeadProps) {
-  const { selectedComponent, setSelectedComponent, annotations, getAnnotationKey, matchingKeys, filterQuery, filterImportance, filterTags } = useTransformerStore();
+  const { selectedComponent, setSelectedComponent, annotations, getAnnotationKey, matchingKeys, filterQuery, filterImportance, filterTags, config, batchMode, batchSelected, toggleBatchComponent, selectBatchRange, lastBatchClicked } = useTransformerStore();
   
   const componentId: SelectedComponent = {
     type: 'attention_head',
@@ -30,7 +30,17 @@ export function AttentionHead({ layerIndex, headIndex }: AttentionHeadProps) {
 
   const importanceColors = annotation ? IMPORTANCE_COLORS[annotation.importance] : null;
 
-  const handleClick = () => {
+  const isBatchSelected = batchSelected.has(key);
+
+  const handleClick = (e: React.MouseEvent) => {
+    if (batchMode) {
+      if (e.shiftKey && lastBatchClicked) {
+        selectBatchRange(lastBatchClicked, key, layerIndex, config.numHeadsPerLayer);
+      } else {
+        toggleBatchComponent(key);
+      }
+      return;
+    }
     setSelectedComponent(componentId);
   };
 
@@ -65,6 +75,8 @@ export function AttentionHead({ layerIndex, headIndex }: AttentionHeadProps) {
               annotation?.notes && 'after:absolute after:-top-0.5 after:-right-0.5 after:w-2 after:h-2 after:bg-white after:rounded-full',
               // Filter dim
               isFiltered && 'opacity-20 pointer-events-none',
+              // Batch selected
+              isBatchSelected && 'border-dashed border-[#00bcd4] border-2',
             )}
           >
             <span className="text-[8px] font-mono text-slate-300">

@@ -5,7 +5,7 @@ import { TransformerVisualization, AnnotationPanel, ConfigPanel, Legend, Stats, 
 import { Button } from '@/components/ui/button';
 import { useTransformerStore } from '@/lib/store';
 import { useProjects } from '@/hooks/useProjects';
-import { Github, HelpCircle, LayoutGrid, AlignJustify } from 'lucide-react';
+import { Github, HelpCircle, LayoutGrid, AlignJustify, Layers } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Tooltip,
@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/dialog';
 
 export default function Home() {
-  const { isPanelOpen, syncFromProject, undo, redo, view, setView } = useTransformerStore();
+  const { isPanelOpen, syncFromProject, undo, redo, view, setView, batchMode, toggleBatchMode } = useTransformerStore();
   const { currentProject } = useProjects();
 
   // Sync store when project changes
@@ -61,11 +61,13 @@ export default function Home() {
         saveBtn?.click();
       } else if ((e.key === 'h' || e.key === 'H') && !inInput) {
         setView(view === 'flow' ? 'heatmap' : 'flow');
+      } else if ((e.key === 'b' || e.key === 'B') && !inInput) {
+        toggleBatchMode();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [undo, redo, announce, view, setView]);
+  }, [undo, redo, announce, view, setView, toggleBatchMode]);
 
   return (
     <div className="min-h-screen bg-djc-navy text-slate-100 flex flex-col">
@@ -104,6 +106,17 @@ export default function Home() {
                 <LayoutGrid className="h-3.5 w-3.5" />
               </Button>
             </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleBatchMode}
+              className={cn('h-8 w-8', batchMode && 'bg-[rgba(0,188,212,0.15)] text-[#00bcd4]')}
+              aria-label="Toggle batch annotation mode"
+              aria-pressed={batchMode}
+              title="Batch mode (B)"
+            >
+              <Layers className="h-3.5 w-3.5" />
+            </Button>
             <UndoRedo />
             {/* Project Selector */}
             <ProjectSelector />

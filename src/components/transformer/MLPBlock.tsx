@@ -10,7 +10,7 @@ interface MLPBlockProps {
 }
 
 export function MLPBlock({ layerIndex }: MLPBlockProps) {
-  const { selectedComponent, setSelectedComponent, annotations, getAnnotationKey, matchingKeys, filterQuery, filterImportance, filterTags } = useTransformerStore();
+  const { selectedComponent, setSelectedComponent, annotations, getAnnotationKey, matchingKeys, filterQuery, filterImportance, filterTags, batchMode, batchSelected, toggleBatchComponent } = useTransformerStore();
   
   const componentId: SelectedComponent = {
     type: 'mlp',
@@ -27,7 +27,13 @@ export function MLPBlock({ layerIndex }: MLPBlockProps) {
 
   const importanceColors = annotation ? IMPORTANCE_COLORS[annotation.importance] : null;
 
-  const handleClick = () => {
+  const isBatchSelected = batchSelected.has(key);
+
+  const handleClick = (e: React.MouseEvent) => {
+    if (batchMode) {
+      toggleBatchComponent(key);
+      return;
+    }
     setSelectedComponent(componentId);
   };
 
@@ -62,6 +68,8 @@ export function MLPBlock({ layerIndex }: MLPBlockProps) {
               annotation?.notes && 'after:absolute after:-top-0.5 after:-right-0.5 after:w-2 after:h-2 after:bg-white after:rounded-full',
               // Filter dim
               isFiltered && 'opacity-20 pointer-events-none',
+              // Batch selected
+              isBatchSelected && 'border-dashed border-[#00bcd4] border-2',
             )}
           >
             <span className="text-xs font-mono text-slate-300">

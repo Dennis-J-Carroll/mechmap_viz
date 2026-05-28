@@ -64,6 +64,16 @@ interface TransformerStore {
   // View slice
   view: 'flow' | 'heatmap';
   setView: (v: 'flow' | 'heatmap') => void;
+
+  // Batch slice
+  batchMode: boolean;
+  batchSelected: Set<string>;
+  lastBatchClicked: string | null;
+  toggleBatchMode: () => void;
+  toggleBatchComponent: (key: string) => void;
+  selectBatchRange: (fromKey: string, toKey: string, layerIndex: number, numHeads: number) => void;
+  applyBatchAnnotation: (data: { importance?: string; tag?: string }) => Promise<void>;
+  clearBatch: () => void;
 }
 
 // Helper to generate unique key for a component
@@ -329,6 +339,97 @@ export const useTransformerStore = create<TransformerStore>()(
       // View slice
       view: 'flow',
       setView: (v) => set({ view: v }),
+
+      // Batch slice
+      batchMode: false,
+      batchSelected: new Set<string>(),
+      lastBatchClicked: null,
+
+      toggleBatchMode: () => set((s) => ({ batchMode: !s.batchMode, batchSelected: new Set(), lastBatchClicked: null })),
+
+      toggleBatchComponent: (key) => {
+        const current = get().batchSelected;
+        const next = new Set(current);
+        if (next.has(key)) { next.delete(key); } else { next.add(key); }
+        set({ batchSelected: next, lastBatchClicked: key });
+      },
+
+      selectBatchRange: (fromKey, toKey, layerIndex, numHeads) => {
+        const parseHead = (k: string) => {
+          const m = k.match(/head-layer-\d+-head-(\d+)/);
+          return m ? parseInt(m[1]) : null;
+        };
+        const fromHead = parseHead(fromKey);
+        const toHead = parseHead(toKey);
+        if (fromHead === null || toHead === null) {
+          get().toggleBatchComponent(toKey);
+          return;
+        }
+        const min = Math.min(fromHead, toHead);
+        const max = Math.max(fromHead, toHead);
+        const next = new Set(get().batchSelected);
+        for (let h = min; h <= max; h++) {
+          next.add(`head-layer-${layerIndex}-head-${h}`);
+        }
+        set({ batchSelected: next, lastBatchClicked: toKey });
+      },
+
+      applyBatchAnnotation: async ({ importance, tag }) => {
+        const { batchSelected, annotations, pushSnapshot, addAnnotation, updateAnnotation, currentProject } = get();
+        pushSnapshot();
+        const now = new Date().toISOString();
+        const results = await Promise.allSettled(
+          Array.from(batchSelected).map(async (key) => {
+            const existing = annotations[key];
+            const mlpMatch = key.match(/^mlp-layer-(\d+)$/);
+            const headMatch = key.match(/^head-layer-(\d+)-head-(\d+)$/);
+            if (!mlpMatch && !headMatch) return;
+            const parsed = mlpMatch
+              ? { type: 'mlp' as const, layerIndex: parseInt(mlpMatch[1]) }
+              : { type: 'attention_head' as const, layerIndex: parseInt(headMatch![1]), headIndex: parseInt(headMatch![2]) };
+
+            const updatedTags = tag && existing?.tags
+              ? existing.tags.includes(tag) ? existing.tags : [...existing.tags, tag]
+              : tag ? [tag] : (existing?.tags ?? []);
+
+            const updated = {
+              id: key,
+              componentType: parsed.type,
+              layerIndex: parsed.layerIndex,
+              headIndex: 'headIndex' in parsed ? parsed.headIndex : undefined,
+              notes: existing?.notes ?? '',
+              tags: updatedTags,
+              importance: (importance as any) ?? existing?.importance ?? 'unknown',
+              createdAt: existing?.createdAt ?? now,
+              updatedAt: now,
+            };
+            if (existing) { updateAnnotation(key, updated); } else { addAnnotation(updated); }
+
+            if (currentProject) {
+              const res = await fetch(`/api/projects/${currentProject.id}/annotations`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  componentType: updated.componentType,
+                  layerIndex: updated.layerIndex,
+                  headIndex: updated.headIndex,
+                  notes: updated.notes,
+                  tags: updated.tags,
+                  importance: updated.importance,
+                }),
+              });
+              if (!res.ok) throw new Error(`Failed for ${key}`);
+            }
+          })
+        );
+        const failed = results.filter((r) => r.status === 'rejected').length;
+        if (failed > 0) {
+          const { toast } = await import('sonner');
+          toast.error(`${failed} component${failed > 1 ? 's' : ''} failed to save`);
+        }
+      },
+
+      clearBatch: () => set({ batchSelected: new Set(), lastBatchClicked: null }),
     }),
     {
       name: 'transformer-viz-storage',
