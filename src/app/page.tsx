@@ -46,15 +46,15 @@ export default function Home() {
       const target = e.target as HTMLElement;
       const inInput = ['INPUT', 'TEXTAREA'].includes(target.tagName);
 
-      if (isCtrl && e.key === 'z' && !e.shiftKey) {
+      if (isCtrl && e.key === 'z' && !e.shiftKey && !inInput) {
         e.preventDefault();
         undo();
         announce('Undo');
-      } else if (isCtrl && e.key === 'z' && e.shiftKey) {
+      } else if (isCtrl && e.key === 'z' && e.shiftKey && !inInput) {
         e.preventDefault();
         redo();
         announce('Redo');
-      } else if (isCtrl && e.key === 's') {
+      } else if (isCtrl && e.key === 's' && !inInput) {
         e.preventDefault();
         const saveBtn = document.querySelector<HTMLButtonElement>('[data-save-annotation]');
         saveBtn?.click();
