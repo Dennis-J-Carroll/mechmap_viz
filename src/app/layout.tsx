@@ -33,6 +33,38 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
       >
+        {/* Portfolio back-link — absolute URL since this app is on its own domain */}
+        <div style={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 99999,
+          background: 'rgba(10,14,20,0.95)',
+          backdropFilter: 'blur(8px)',
+          borderBottom: '1px solid rgba(0,188,212,0.15)',
+          padding: '0 1rem',
+          height: '40px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <a
+              href="https://dennisjcarroll.com/apps/"
+              style={{ color: '#00bcd4', textDecoration: 'none', fontSize: '13px', fontWeight: 500 }}
+            >
+              ← Back to Projects
+            </a>
+            <span style={{ color: '#4b5563', flexShrink: 0 }}>|</span>
+            <span style={{ color: '#d1d5db', fontSize: '13px' }}>Mech Interp Viz</span>
+          </div>
+          <a
+            href="https://dennisjcarroll.com"
+            style={{ color: '#00bcd4', fontWeight: 700, letterSpacing: '0.05em', fontSize: '13px', textDecoration: 'none' }}
+          >
+            DJC
+          </a>
+        </div>
         {children}
         <Toaster />
       </body>
