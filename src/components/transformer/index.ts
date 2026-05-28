@@ -17,3 +17,5 @@ export { LayerNavigator } from './LayerNavigator';
 export { AutoBackupIndicator } from './AutoBackupIndicator';
 export { CircuitList } from './CircuitList';
 export { CircuitTemplates } from './CircuitTemplates';
+export { CircuitPanel } from './CircuitPanel';
+export { CircuitNodeRow } from './CircuitNodeRow';

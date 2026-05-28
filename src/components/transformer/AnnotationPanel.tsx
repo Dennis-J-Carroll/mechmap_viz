@@ -28,6 +28,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Drawer } from 'vaul';
+import { CircuitPanel } from './CircuitPanel';
 
 // Internal form component that manages its own state
 // Key prop from parent causes remount when selection changes, resetting state
@@ -323,7 +324,13 @@ export function AnnotationPanel({ embedded = false }: AnnotationPanelProps) {
     exportAnnotations,
     importAnnotations,
     currentProject,
+    activeCircuitId,
   } = useTransformerStore();
+
+  // When a circuit is active, show CircuitPanel instead (not in embedded mode)
+  if (activeCircuitId && !embedded) {
+    return <CircuitPanel />;
+  }
 
   const [importError, setImportError] = useState('');
 
