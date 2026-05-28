@@ -14,7 +14,8 @@ export interface HeatmapLayout {
 interface TooltipState {
   x: number;
   y: number;
-  html: string;
+  label: string;
+  detail: string;
 }
 
 const HEATMAP_COLORS: Record<string, string> = {
@@ -34,7 +35,6 @@ export function HeatmapView({ layoutRef: externalLayoutRef }: HeatmapViewProps =
   const containerRef = useRef<HTMLDivElement>(null);
   const internalLayoutRef = useRef<HeatmapLayout | null>(null);
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
-  const [dims, setDims] = useState({ w: 0, h: 0 });
 
   const { config, annotations, setSelectedComponent, setView } = useTransformerStore();
   const { numLayers, numHeadsPerLayer, modelName } = config;
@@ -126,8 +126,6 @@ export function HeatmapView({ layoutRef: externalLayoutRef }: HeatmapViewProps =
     const container = containerRef.current;
     if (!container) return;
     const ro = new ResizeObserver((entries) => {
-      const rect = entries[0].contentRect;
-      setDims({ w: rect.width, h: rect.height });
       draw();
     });
     ro.observe(container);
@@ -156,7 +154,7 @@ export function HeatmapView({ layoutRef: externalLayoutRef }: HeatmapViewProps =
     const detail = ann
       ? `${ann.importance}${ann.tags.length > 0 ? ` · ${ann.tags.length} tags` : ''}`
       : 'unannotated';
-    setTooltip({ x: e.clientX, y: e.clientY, html: `<b>${label}</b><br>${detail}` });
+    setTooltip({ x: e.clientX, y: e.clientY, label, detail });
   };
 
   const handleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -185,10 +183,12 @@ export function HeatmapView({ layoutRef: externalLayoutRef }: HeatmapViewProps =
         />
         {tooltip && (
           <div
-            className="fixed z-50 pointer-events-none bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-slate-200 shadow-lg"
+            className="fixed z-50 pointer-events-none bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-slate-200 shadow-lg space-y-0.5"
             style={{ left: tooltip.x + 12, top: tooltip.y + 12 }}
-            dangerouslySetInnerHTML={{ __html: tooltip.html }}
-          />
+          >
+            <p className="font-semibold">{tooltip.label}</p>
+            <p className="text-slate-400">{tooltip.detail}</p>
+          </div>
         )}
       </div>
     </div>
