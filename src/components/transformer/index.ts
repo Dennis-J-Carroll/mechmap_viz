@@ -8,3 +8,4 @@ export { Legend } from './Legend';
 export { Stats } from './Stats';
 export { ProjectSelector } from './ProjectSelector';
 export { LayeredNetworkIcon } from './LayeredNetworkIcon';
+export { UndoRedo } from './UndoRedo';

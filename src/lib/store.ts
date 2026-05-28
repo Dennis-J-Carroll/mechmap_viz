@@ -40,6 +40,15 @@ interface TransformerStore {
   // Config panel state
   isConfigPanelOpen: boolean;
   setConfigPanelOpen: (open: boolean) => void;
+
+  // History slice — undo/redo
+  history: Record<string, Annotation>[];
+  historyPointer: number;
+  isDirty: boolean;
+  isRestoring: boolean;
+  pushSnapshot: () => void;
+  undo: () => void;
+  redo: () => void;
 }
 
 // Helper to generate unique key for a component
@@ -192,6 +201,50 @@ export const useTransformerStore = create<TransformerStore>()(
       // Config panel state
       isConfigPanelOpen: false,
       setConfigPanelOpen: (open) => set({ isConfigPanelOpen: open }),
+
+      // History slice
+      history: [],
+      historyPointer: -1,
+      isDirty: false,
+      isRestoring: false,
+
+      pushSnapshot: () => {
+        const state = get();
+        if (state.isRestoring) return;
+        const snapshot = structuredClone(state.annotations);
+        const stack = state.history.slice(0, state.historyPointer + 1);
+        stack.push(snapshot);
+        const trimmed = stack.length > 20 ? stack.slice(stack.length - 20) : stack;
+        set({ history: trimmed, historyPointer: trimmed.length - 1 });
+      },
+
+      undo: () => {
+        const { history, historyPointer, currentProject } = get();
+        if (historyPointer <= 0) return;
+        const newPointer = historyPointer - 1;
+        const snapshot = structuredClone(history[newPointer]);
+        set({
+          annotations: snapshot,
+          historyPointer: newPointer,
+          isRestoring: true,
+          isDirty: currentProject !== null,
+        });
+        set({ isRestoring: false });
+      },
+
+      redo: () => {
+        const { history, historyPointer, currentProject } = get();
+        if (historyPointer >= history.length - 1) return;
+        const newPointer = historyPointer + 1;
+        const snapshot = structuredClone(history[newPointer]);
+        set({
+          annotations: snapshot,
+          historyPointer: newPointer,
+          isRestoring: true,
+          isDirty: currentProject !== null,
+        });
+        set({ isRestoring: false });
+      },
     }),
     {
       name: 'transformer-viz-storage',

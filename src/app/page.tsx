@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { TransformerVisualization, AnnotationPanel, ConfigPanel, Legend, Stats, ProjectSelector, LayeredNetworkIcon } from '@/components/transformer';
+import { TransformerVisualization, AnnotationPanel, ConfigPanel, Legend, Stats, ProjectSelector, LayeredNetworkIcon, UndoRedo } from '@/components/transformer';
 import { Button } from '@/components/ui/button';
 import { useTransformerStore } from '@/lib/store';
 import { useProjects } from '@/hooks/useProjects';
@@ -22,13 +22,29 @@ import {
 } from '@/components/ui/dialog';
 
 export default function Home() {
-  const { isPanelOpen, syncFromProject } = useTransformerStore();
+  const { isPanelOpen, syncFromProject, undo, redo } = useTransformerStore();
   const { currentProject } = useProjects();
 
   // Sync store when project changes
   useEffect(() => {
     syncFromProject(currentProject);
   }, [currentProject, syncFromProject]);
+
+  // Global Ctrl+Z / Ctrl+Shift+Z handler
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const isCtrl = e.ctrlKey || e.metaKey;
+      if (isCtrl && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+      } else if (isCtrl && e.key === 'z' && e.shiftKey) {
+        e.preventDefault();
+        redo();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [undo, redo]);
 
   return (
     <div className="min-h-screen bg-djc-navy text-slate-100 flex flex-col">
@@ -44,6 +60,7 @@ export default function Home() {
           </div>
           
           <div className="flex items-center gap-2">
+            <UndoRedo />
             {/* Project Selector */}
             <ProjectSelector />
             

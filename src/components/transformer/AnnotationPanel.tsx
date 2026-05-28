@@ -39,7 +39,7 @@ function AnnotationForm({
   selectedComponent: NonNullable<ReturnType<typeof useTransformerStore>['selectedComponent']>;
   existingAnnotation?: Annotation;
 }) {
-  const { addAnnotation, updateAnnotation, deleteAnnotation: localDeleteAnnotation } = useTransformerStore();
+  const { addAnnotation, updateAnnotation, deleteAnnotation: localDeleteAnnotation, pushSnapshot } = useTransformerStore();
   const { currentProject, saveAnnotation, deleteAnnotation: dbDeleteAnnotation } = useProjects();
 
   // Initialize state from existing annotation (component remounts when key changes)
@@ -51,6 +51,7 @@ function AnnotationForm({
 
   // Save annotation
   const handleSave = useCallback(async () => {
+    pushSnapshot(); // snapshot BEFORE mutating
     setIsSaving(true);
     const annotationData: Annotation = {
       id: componentKey,
@@ -89,10 +90,11 @@ function AnnotationForm({
       }
     }
     setIsSaving(false);
-  }, [componentKey, selectedComponent, notes, tags, importance, existingAnnotation, currentProject, saveAnnotation, addAnnotation, updateAnnotation]);
+  }, [componentKey, selectedComponent, notes, tags, importance, existingAnnotation, currentProject, saveAnnotation, addAnnotation, updateAnnotation, pushSnapshot]);
 
   // Delete annotation
   const handleDelete = useCallback(async () => {
+    pushSnapshot(); // snapshot BEFORE mutating
     if (currentProject && existingAnnotation) {
       await dbDeleteAnnotation(existingAnnotation.id);
     }
@@ -100,7 +102,7 @@ function AnnotationForm({
     setNotes('');
     setTags([]);
     setImportance('unknown');
-  }, [componentKey, currentProject, existingAnnotation, dbDeleteAnnotation, localDeleteAnnotation]);
+  }, [componentKey, currentProject, existingAnnotation, dbDeleteAnnotation, localDeleteAnnotation, pushSnapshot]);
 
   // Add tag
   const handleAddTag = useCallback((tag: string) => {
