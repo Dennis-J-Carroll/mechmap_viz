@@ -10,7 +10,7 @@ interface MLPBlockProps {
 }
 
 export function MLPBlock({ layerIndex }: MLPBlockProps) {
-  const { selectedComponent, setSelectedComponent, annotations, getAnnotationKey, matchingKeys, filterQuery, filterImportance, filterTags, batchMode, batchSelected, toggleBatchComponent } = useTransformerStore();
+  const { selectedComponent, setSelectedComponent, annotations, getAnnotationKey, matchingKeys, filterQuery, filterImportance, filterTags, batchMode, batchSelected, toggleBatchComponent, circuitBuildMode, activeCircuitId, circuits, addNodeToCircuit } = useTransformerStore();
   
   const componentId: SelectedComponent = {
     type: 'mlp',
@@ -29,7 +29,18 @@ export function MLPBlock({ layerIndex }: MLPBlockProps) {
 
   const isBatchSelected = batchSelected.has(key);
 
+  const activeCircuit = circuits.find((c) => c.id === activeCircuitId);
+  const isInActiveCircuit = activeCircuit?.nodes.some(
+    (n) => n.componentType === 'mlp' && n.layerIndex === layerIndex
+  ) ?? false;
+
   const handleClick = (e: React.MouseEvent) => {
+    // Circuit build mode takes highest priority
+    if (circuitBuildMode && activeCircuitId) {
+      addNodeToCircuit(key);
+      return;
+    }
+    // Batch mode (MLP has no range select)
     if (batchMode) {
       toggleBatchComponent(key);
       return;
@@ -49,6 +60,11 @@ export function MLPBlock({ layerIndex }: MLPBlockProps) {
                 : ' — unannotated'
             }`}
             aria-pressed={isSelected}
+            style={
+              isInActiveCircuit && activeCircuit
+                ? { boxShadow: `0 0 0 2px ${activeCircuit.color}` }
+                : undefined
+            }
             className={cn(
               'relative w-16 h-10 rounded-md transition-all duration-200',
               'border-2 flex items-center justify-center',

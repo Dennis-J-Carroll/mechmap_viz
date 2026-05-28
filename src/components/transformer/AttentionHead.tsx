@@ -11,7 +11,7 @@ interface AttentionHeadProps {
 }
 
 export function AttentionHead({ layerIndex, headIndex }: AttentionHeadProps) {
-  const { selectedComponent, setSelectedComponent, annotations, getAnnotationKey, matchingKeys, filterQuery, filterImportance, filterTags, config, batchMode, batchSelected, toggleBatchComponent, selectBatchRange, lastBatchClicked } = useTransformerStore();
+  const { selectedComponent, setSelectedComponent, annotations, getAnnotationKey, matchingKeys, filterQuery, filterImportance, filterTags, config, batchMode, batchSelected, toggleBatchComponent, selectBatchRange, lastBatchClicked, circuitBuildMode, activeCircuitId, circuits, addNodeToCircuit } = useTransformerStore();
   
   const componentId: SelectedComponent = {
     type: 'attention_head',
@@ -32,7 +32,21 @@ export function AttentionHead({ layerIndex, headIndex }: AttentionHeadProps) {
 
   const isBatchSelected = batchSelected.has(key);
 
+  const activeCircuit = circuits.find((c) => c.id === activeCircuitId);
+  const isInActiveCircuit = activeCircuit?.nodes.some(
+    (n) =>
+      n.componentType === 'attention_head' &&
+      n.layerIndex === layerIndex &&
+      n.headIndex === headIndex
+  ) ?? false;
+
   const handleClick = (e: React.MouseEvent) => {
+    // Circuit build mode takes highest priority
+    if (circuitBuildMode && activeCircuitId) {
+      addNodeToCircuit(key);
+      return;
+    }
+    // Batch mode
     if (batchMode) {
       if (e.shiftKey && lastBatchClicked) {
         selectBatchRange(lastBatchClicked, key, layerIndex, config.numHeadsPerLayer);
@@ -56,6 +70,11 @@ export function AttentionHead({ layerIndex, headIndex }: AttentionHeadProps) {
                 : ' — unannotated'
             }`}
             aria-pressed={isSelected}
+            style={
+              isInActiveCircuit && activeCircuit
+                ? { boxShadow: `0 0 0 2px ${activeCircuit.color}` }
+                : undefined
+            }
             className={cn(
               'relative w-7 h-7 rounded-full transition-all duration-200',
               'border-2 flex items-center justify-center',

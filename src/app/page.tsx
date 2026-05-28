@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { TransformerVisualization, AnnotationPanel, ConfigPanel, Legend, Stats, ProjectSelector, LayeredNetworkIcon, UndoRedo, SearchBar, AutoBackupIndicator, MobileAnnotationDrawer, CircuitTemplates } from '@/components/transformer';
+import { useCircuits } from '@/hooks/useCircuits';
+import { TransformerVisualization, AnnotationPanel, ConfigPanel, Legend, Stats, ProjectSelector, LayeredNetworkIcon, UndoRedo, SearchBar, AutoBackupIndicator, MobileAnnotationDrawer, CircuitTemplates, CircuitBuildBanner } from '@/components/transformer';
 import { Button } from '@/components/ui/button';
 import { useTransformerStore } from '@/lib/store';
 import { useProjects } from '@/hooks/useProjects';
@@ -24,8 +25,9 @@ import {
 } from '@/components/ui/dialog';
 
 export default function Home() {
-  const { isPanelOpen, setPanelOpen, syncFromProject, undo, redo, view, setView, batchMode, toggleBatchMode } = useTransformerStore();
+  const { isPanelOpen, setPanelOpen, syncFromProject, undo, redo, view, setView, batchMode, toggleBatchMode, circuitBuildMode, toggleCircuitBuildMode, activeCircuitId, setActiveCircuit } = useTransformerStore();
   const { currentProject } = useProjects();
+  const { loadCircuits } = useCircuits();
   const isMobile = useIsMobile();
   const [mobileTab, setMobileTab] = useState<'viz' | 'notes' | 'stats'>('viz');
   const [circuitModalOpen, setCircuitModalOpen] = useState(false);
@@ -33,7 +35,10 @@ export default function Home() {
   // Sync store when project changes
   useEffect(() => {
     syncFromProject(currentProject);
-  }, [currentProject, syncFromProject]);
+    if (currentProject) {
+      loadCircuits(currentProject.id);
+    }
+  }, [currentProject, syncFromProject, loadCircuits]);
 
   // Announce helper for screen readers
   const announce = useCallback((msg: string) => {
@@ -63,17 +68,31 @@ export default function Home() {
         e.preventDefault();
         const saveBtn = document.querySelector<HTMLButtonElement>('[data-save-annotation]');
         saveBtn?.click();
+      } else if (e.key === 'Escape') {
+        if (circuitBuildMode) {
+          // Escape exits build mode without deselecting circuit
+          toggleCircuitBuildMode();
+        } else if (activeCircuitId) {
+          // Second Escape deselects circuit
+          setActiveCircuit(null);
+        }
       } else if ((e.key === 'h' || e.key === 'H') && !inInput) {
         setView(view === 'flow' ? 'heatmap' : 'flow');
       } else if ((e.key === 'b' || e.key === 'B') && !inInput) {
-        toggleBatchMode();
+        if (activeCircuitId) {
+          // B toggles circuit build mode when circuit is active
+          toggleCircuitBuildMode();
+        } else {
+          // B toggles batch mode when no circuit active
+          toggleBatchMode();
+        }
       } else if ((e.key === 'c' || e.key === 'C') && !inInput) {
         setCircuitModalOpen(true);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [undo, redo, announce, view, setView, toggleBatchMode, setCircuitModalOpen]);
+  }, [undo, redo, announce, view, setView, toggleBatchMode, setCircuitModalOpen, circuitBuildMode, toggleCircuitBuildMode, activeCircuitId, setActiveCircuit]);
 
   return (
     <div className="min-h-screen bg-djc-navy text-slate-100 flex flex-col">
@@ -86,6 +105,7 @@ export default function Home() {
             <span className="text-xs text-slate-500 hidden sm:inline">
               Mechanistic Interpretability Visualization
             </span>
+            <CircuitBuildBanner />
             <SearchBar />
           </div>
           
