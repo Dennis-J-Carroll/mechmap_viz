@@ -5,7 +5,8 @@ import { TransformerVisualization, AnnotationPanel, ConfigPanel, Legend, Stats, 
 import { Button } from '@/components/ui/button';
 import { useTransformerStore } from '@/lib/store';
 import { useProjects } from '@/hooks/useProjects';
-import { Github, HelpCircle } from 'lucide-react';
+import { Github, HelpCircle, LayoutGrid, AlignJustify } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import {
   Tooltip,
   TooltipContent,
@@ -22,7 +23,7 @@ import {
 } from '@/components/ui/dialog';
 
 export default function Home() {
-  const { isPanelOpen, syncFromProject, undo, redo } = useTransformerStore();
+  const { isPanelOpen, syncFromProject, undo, redo, view, setView } = useTransformerStore();
   const { currentProject } = useProjects();
 
   // Sync store when project changes
@@ -58,11 +59,13 @@ export default function Home() {
         e.preventDefault();
         const saveBtn = document.querySelector<HTMLButtonElement>('[data-save-annotation]');
         saveBtn?.click();
+      } else if ((e.key === 'h' || e.key === 'H') && !inInput) {
+        setView(view === 'flow' ? 'heatmap' : 'flow');
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [undo, redo, announce]);
+  }, [undo, redo, announce, view, setView]);
 
   return (
     <div className="min-h-screen bg-djc-navy text-slate-100 flex flex-col">
@@ -79,6 +82,28 @@ export default function Home() {
           </div>
           
           <div className="flex items-center gap-2">
+            <div className="flex items-center gap-0.5 border border-[rgba(0,188,212,0.2)] rounded-md">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setView('flow')}
+                className={cn('h-8 w-8 rounded-r-none', view === 'flow' && 'bg-[rgba(0,188,212,0.15)] text-[#00bcd4]')}
+                aria-label="Flow view"
+                aria-pressed={view === 'flow'}
+              >
+                <AlignJustify className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setView('heatmap')}
+                className={cn('h-8 w-8 rounded-l-none', view === 'heatmap' && 'bg-[rgba(0,188,212,0.15)] text-[#00bcd4]')}
+                aria-label="Heatmap view"
+                aria-pressed={view === 'heatmap'}
+              >
+                <LayoutGrid className="h-3.5 w-3.5" />
+              </Button>
+            </div>
             <UndoRedo />
             {/* Project Selector */}
             <ProjectSelector />

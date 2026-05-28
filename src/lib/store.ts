@@ -60,6 +60,10 @@ interface TransformerStore {
   toggleFilterTag: (tag: string) => void;
   clearFilters: () => void;
   applyFilters: () => void;
+
+  // View slice
+  view: 'flow' | 'heatmap';
+  setView: (v: 'flow' | 'heatmap') => void;
 }
 
 // Helper to generate unique key for a component
@@ -321,11 +325,16 @@ export const useTransformerStore = create<TransformerStore>()(
         }
         set({ matchingKeys: matches });
       },
+
+      // View slice
+      view: 'flow',
+      setView: (v) => set({ view: v }),
     }),
     {
       name: 'transformer-viz-storage',
       partialize: (state) => ({
         config: state.config,
+        view: state.view,
         // Only persist annotations if no project is loaded (for offline/local use)
         ...(state.currentProject ? {} : { annotations: state.annotations }),
       }),

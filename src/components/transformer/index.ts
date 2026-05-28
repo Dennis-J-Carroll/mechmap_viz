@@ -11,3 +11,4 @@ export { LayeredNetworkIcon } from './LayeredNetworkIcon';
 export { UndoRedo } from './UndoRedo';
 export { SearchBar } from './SearchBar';
 export { FilterPanel } from './FilterPanel';
+export { HeatmapView } from './HeatmapView';

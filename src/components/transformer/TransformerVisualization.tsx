@@ -5,9 +5,10 @@ import { useTransformerStore } from '@/lib/store';
 import { TransformerLayer } from './TransformerLayer';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
+import { HeatmapView } from './HeatmapView';
 
 export function TransformerVisualization() {
-  const { config } = useTransformerStore();
+  const { config, view } = useTransformerStore();
   const { numLayers, modelName } = config;
   const kbFocus = useRef({ layer: 0, head: 0, isMlp: false });
 
@@ -66,8 +67,9 @@ export function TransformerVisualization() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [config, focusComponent]);
 
-  // NOTE: if view is 'heatmap', TransformerVisualization currently shows flow.
-  // view check will be added in Task 6. For now, always render flow view.
+  if (view === 'heatmap') {
+    return <HeatmapView />;
+  }
 
   return (
     <div className="flex flex-col items-center h-full">
