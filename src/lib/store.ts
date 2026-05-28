@@ -287,7 +287,8 @@ export const useTransformerStore = create<TransformerStore>()(
       },
 
       clearFilters: () => {
-        set({ filterQuery: '', filterImportance: [], filterTags: [], matchingKeys: new Set() });
+        set({ filterQuery: '', filterImportance: [], filterTags: [] });
+        get().applyFilters();
       },
 
       applyFilters: () => {
