@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTransformerStore } from '@/lib/store';
+import { CircuitOverlay } from './CircuitOverlay';
 
 export interface HeatmapLayout {
   offsetX: number;
@@ -35,6 +36,7 @@ export function HeatmapView({ layoutRef: externalLayoutRef }: HeatmapViewProps =
   const containerRef = useRef<HTMLDivElement>(null);
   const internalLayoutRef = useRef<HeatmapLayout | null>(null);
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
+  const [cssDims, setCssDims] = useState({ w: 0, h: 0 });
 
   const { config, annotations, setSelectedComponent, setView } = useTransformerStore();
   const { numLayers, numHeadsPerLayer, modelName } = config;
@@ -126,6 +128,8 @@ export function HeatmapView({ layoutRef: externalLayoutRef }: HeatmapViewProps =
     const container = containerRef.current;
     if (!container) return;
     const ro = new ResizeObserver((entries) => {
+      const rect = entries[0].contentRect;
+      setCssDims({ w: rect.width, h: rect.height - 32 });
       draw();
     });
     ro.observe(container);
@@ -180,6 +184,11 @@ export function HeatmapView({ layoutRef: externalLayoutRef }: HeatmapViewProps =
           onMouseLeave={() => setTooltip(null)}
           onClick={handleClick}
           className="cursor-pointer"
+        />
+        <CircuitOverlay
+          layout={internalLayoutRef.current}
+          width={cssDims.w}
+          height={cssDims.h}
         />
         {tooltip && (
           <div

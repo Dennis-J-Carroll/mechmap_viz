@@ -20,3 +20,4 @@ export { CircuitTemplates } from './CircuitTemplates';
 export { CircuitPanel } from './CircuitPanel';
 export { CircuitNodeRow } from './CircuitNodeRow';
 export { CircuitBuildBanner } from './CircuitBuildBanner';
+export { CircuitOverlay } from './CircuitOverlay';
