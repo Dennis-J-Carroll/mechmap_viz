@@ -16,6 +16,17 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { X, Plus, Trash2, Download, Upload, Database, CloudOff } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 // Internal form component that manages its own state
 // Key prop from parent causes remount when selection changes, resetting state
@@ -256,13 +267,31 @@ function AnnotationForm({
           {isSaving ? 'Saving...' : 'Save Annotation'}
         </Button>
         {existingAnnotation && (
-          <Button
-            variant="destructive"
-            size="icon"
-            onClick={handleDelete}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" size="icon">
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Annotation</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. The annotation, all tags, notes,
+                  and importance ratings will be permanently removed.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDelete}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         )}
       </div>
 
