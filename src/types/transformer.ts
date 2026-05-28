@@ -54,6 +54,46 @@ export const PREDEFINED_TAGS = [
 
 export type PredefinedTag = typeof PREDEFINED_TAGS[number];
 
+// ─── Circuit Discovery Types ───────────────────────────────────────────────
+
+export interface PathNodeData {
+  id: string;
+  position: number;
+  componentType: 'attention_head' | 'mlp';
+  layerIndex: number;
+  headIndex?: number;
+  role?: string;       // 'source' | 'relay' | 'amplifier' | 'inhibitor' | 'sink'
+  signalType?: string; // 'positional' | 'content' | 'name' | 'fact' | 'pattern'
+  notes?: string;
+  connectionType?: 'and' | 'or';
+  denoisingScore?: number;
+  noisingScore?: number;
+  annotationId?: string;
+}
+
+export interface CircuitPath {
+  id: string;
+  projectId: string;
+  name: string;
+  description?: string;
+  circuitType: string; // 'induction' | 'factual_recall' | 'copy' | 'inhibition' | 'boosting' | 'custom'
+  hypothesis?: string;
+  evidence?: string;
+  confidence: string;  // 'verified' | 'likely' | 'speculative'
+  color: string;
+  isPublic: boolean;
+  createdAt: string;
+  updatedAt: string;
+  nodes: PathNodeData[];
+}
+
+export interface CreateCircuitInput {
+  name: string;
+  circuitType: string;
+  color: string;
+  templateNodes?: Omit<PathNodeData, 'id' | 'position'>[];
+}
+
 // Color schemes for importance levels
 export const IMPORTANCE_COLORS: Record<ImportanceLevel, { bg: string; border: string; text: string }> = {
   high: {

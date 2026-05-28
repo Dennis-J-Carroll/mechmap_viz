@@ -4,6 +4,9 @@ import {
   Annotation,
   TransformerConfig,
   SelectedComponent,
+  CircuitPath,
+  PathNodeData,
+  CreateCircuitInput,
 } from '@/types/transformer';
 import { DbAnnotation, ProjectWithAnnotations } from '@/types/api';
 
@@ -74,6 +77,20 @@ interface TransformerStore {
   selectBatchRange: (fromKey: string, toKey: string, layerIndex: number, numHeads: number) => void;
   applyBatchAnnotation: (data: { importance?: string; tag?: string }) => Promise<void>;
   clearBatch: () => void;
+
+  // Circuit slice
+  circuits: CircuitPath[];
+  activeCircuitId: string | null;
+  circuitBuildMode: boolean;
+  setCircuits: (circuits: CircuitPath[]) => void;
+  setActiveCircuit: (id: string | null) => void;
+  toggleCircuitBuildMode: () => void;
+  addNodeToCircuit: (componentKey: string) => void;
+  removeCircuitNode: (nodeIndex: number) => void;
+  createCircuit: (input: CreateCircuitInput) => Promise<CircuitPath | null>;
+  deleteCircuit: (id: string) => Promise<void>;
+  updateCircuitNode: (circuitId: string, nodeId: string, data: Partial<PathNodeData>) => Promise<void>;
+  reorderCircuitNodes: (circuitId: string, nodeIds: string[]) => Promise<void>;
 }
 
 // Helper to generate unique key for a component
@@ -430,6 +447,146 @@ export const useTransformerStore = create<TransformerStore>()(
       },
 
       clearBatch: () => set({ batchSelected: new Set(), lastBatchClicked: null }),
+
+      // Circuit slice
+      circuits: [],
+      activeCircuitId: null,
+      circuitBuildMode: false,
+
+      setCircuits: (circuits) => set({ circuits }),
+
+      setActiveCircuit: (id) => {
+        set({ activeCircuitId: id, circuitBuildMode: false });
+      },
+
+      toggleCircuitBuildMode: () => {
+        const { activeCircuitId } = get();
+        if (!activeCircuitId) return;
+        // Disable batch mode when entering circuit build mode
+        set((s) => ({
+          circuitBuildMode: !s.circuitBuildMode,
+          batchMode: false,
+          batchSelected: new Set(),
+        }));
+      },
+
+      addNodeToCircuit: (componentKey) => {
+        const { activeCircuitId, circuits } = get();
+        if (!activeCircuitId) return;
+        const circuit = circuits.find((c) => c.id === activeCircuitId);
+        if (!circuit) return;
+
+        const mlpMatch = componentKey.match(/^mlp-layer-(\d+)$/);
+        const headMatch = componentKey.match(/^head-layer-(\d+)-head-(\d+)$/);
+        if (!mlpMatch && !headMatch) return;
+
+        const tempNode: PathNodeData = mlpMatch
+          ? {
+              id: `temp-${Date.now()}`,
+              position: circuit.nodes.length,
+              componentType: 'mlp',
+              layerIndex: parseInt(mlpMatch[1]),
+            }
+          : {
+              id: `temp-${Date.now()}`,
+              position: circuit.nodes.length,
+              componentType: 'attention_head',
+              layerIndex: parseInt(headMatch![1]),
+              headIndex: parseInt(headMatch![2]),
+            };
+
+        const updatedCircuits = circuits.map((c) =>
+          c.id === activeCircuitId ? { ...c, nodes: [...c.nodes, tempNode] } : c
+        );
+        set({ circuits: updatedCircuits });
+      },
+
+      removeCircuitNode: (nodeIndex) => {
+        const { activeCircuitId, circuits } = get();
+        const updatedCircuits = circuits.map((c) => {
+          if (c.id !== activeCircuitId) return c;
+          const nodes = c.nodes
+            .filter((_, i) => i !== nodeIndex)
+            .map((n, i) => ({ ...n, position: i }));
+          return { ...c, nodes };
+        });
+        set({ circuits: updatedCircuits });
+      },
+
+      createCircuit: async (input) => {
+        const { currentProject, circuits, setCircuits } = get();
+        if (!currentProject) return null;
+        try {
+          const res = await fetch(`/api/projects/${currentProject.id}/circuits`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: input.name,
+              circuitType: input.circuitType,
+              color: input.color,
+              confidence: 'speculative',
+              nodes: input.templateNodes?.map((n, i) => ({ ...n, position: i })),
+            }),
+          });
+          if (!res.ok) throw new Error('Failed to create circuit');
+          const circuit: CircuitPath = await res.json();
+          setCircuits([...circuits, circuit]);
+          return circuit;
+        } catch {
+          return null;
+        }
+      },
+
+      deleteCircuit: async (id) => {
+        const { circuits, activeCircuitId } = get();
+        try {
+          await fetch(`/api/circuits/${id}`, { method: 'DELETE' });
+          set({
+            circuits: circuits.filter((c) => c.id !== id),
+            activeCircuitId: activeCircuitId === id ? null : activeCircuitId,
+            circuitBuildMode: false,
+          });
+        } catch { /* swallow */ }
+      },
+
+      updateCircuitNode: async (circuitId, nodeId, data) => {
+        const { circuits } = get();
+        // Optimistic update
+        const updatedCircuits = circuits.map((c) => {
+          if (c.id !== circuitId) return c;
+          return {
+            ...c,
+            nodes: c.nodes.map((n) => (n.id === nodeId ? { ...n, ...data } : n)),
+          };
+        });
+        set({ circuits: updatedCircuits });
+        // Persist via PUT with nodeId
+        await fetch(`/api/circuits/${circuitId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nodeId, ...data }),
+        });
+      },
+
+      reorderCircuitNodes: async (circuitId, nodeIds) => {
+        const { circuits } = get();
+        // Optimistic reorder
+        const updatedCircuits = circuits.map((c) => {
+          if (c.id !== circuitId) return c;
+          const nodeMap = Object.fromEntries(c.nodes.map((n) => [n.id, n]));
+          const reordered = nodeIds
+            .filter((id) => nodeMap[id])
+            .map((id, i) => ({ ...nodeMap[id], position: i }));
+          return { ...c, nodes: reordered };
+        });
+        set({ circuits: updatedCircuits });
+        // Persist via PATCH
+        await fetch(`/api/circuits/${circuitId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nodeIds }),
+        });
+      },
     }),
     {
       name: 'transformer-viz-storage',
