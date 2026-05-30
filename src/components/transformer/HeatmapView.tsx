@@ -33,7 +33,7 @@ interface HeatmapViewProps {
 
 export function HeatmapView({ layoutRef: externalLayoutRef }: HeatmapViewProps = {}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const canvasWrapRef = useRef<HTMLDivElement>(null);
   const internalLayoutRef = useRef<HeatmapLayout | null>(null);
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
   const [cssDims, setCssDims] = useState({ w: 0, h: 0 });
@@ -43,13 +43,15 @@ export function HeatmapView({ layoutRef: externalLayoutRef }: HeatmapViewProps =
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
-    const container = containerRef.current;
-    if (!canvas || !container) return;
+    const wrap = canvasWrapRef.current;
+    if (!canvas || !wrap) return;
 
     const dpr = window.devicePixelRatio || 1;
-    const rect = container.getBoundingClientRect();
+    // Measure the canvas wrapper (already excludes the title via flex layout).
+    const rect = wrap.getBoundingClientRect();
     const cssW = rect.width;
-    const cssH = rect.height - 32; // reserve 32px for title
+    const cssH = rect.height;
+    if (cssW <= 0 || cssH <= 0) return;
 
     canvas.width = Math.round(cssW * dpr);
     canvas.height = Math.round(cssH * dpr);
@@ -125,15 +127,22 @@ export function HeatmapView({ layoutRef: externalLayoutRef }: HeatmapViewProps =
   useEffect(() => { draw(); }, [draw]);
 
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
+    const wrap = canvasWrapRef.current;
+    if (!wrap) return;
+    let raf = 0;
     const ro = new ResizeObserver((entries) => {
       const rect = entries[0].contentRect;
-      setCssDims({ w: rect.width, h: rect.height - 32 });
-      draw();
+      setCssDims({ w: rect.width, h: rect.height });
+      // Defer draw to next frame so we never write layout inside the
+      // observer callback (avoids "ResizeObserver loop" warnings).
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => draw());
     });
-    ro.observe(container);
-    return () => ro.disconnect();
+    ro.observe(wrap);
+    return () => {
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+    };
   }, [draw]);
 
   const getCellFromEvent = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -173,17 +182,17 @@ export function HeatmapView({ layoutRef: externalLayoutRef }: HeatmapViewProps =
   };
 
   return (
-    <div ref={containerRef} className="flex flex-col h-full w-full">
-      <div className="flex items-center justify-center py-2">
+    <div className="flex flex-col h-full w-full min-h-0 overflow-hidden">
+      <div className="flex items-center justify-center py-2 shrink-0">
         <h2 className="text-base font-bold text-slate-200">{modelName} — Heatmap</h2>
       </div>
-      <div className="relative flex-1">
+      <div ref={canvasWrapRef} className="relative flex-1 min-h-0 overflow-hidden">
         <canvas
           ref={canvasRef}
           onMouseMove={handleMouseMove}
           onMouseLeave={() => setTooltip(null)}
           onClick={handleClick}
-          className="cursor-pointer"
+          className="absolute inset-0 cursor-pointer"
         />
         <CircuitOverlay
           layout={internalLayoutRef.current}

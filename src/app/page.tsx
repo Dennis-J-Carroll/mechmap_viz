@@ -95,7 +95,7 @@ export default function Home() {
   }, [undo, redo, announce, view, setView, toggleBatchMode, setCircuitModalOpen, circuitBuildMode, toggleCircuitBuildMode, activeCircuitId, setActiveCircuit]);
 
   return (
-    <div className="min-h-screen bg-djc-navy text-slate-100 flex flex-col">
+    <div className="h-[calc(100dvh-40px)] overflow-hidden bg-djc-navy text-slate-100 flex flex-col">
       {/* Header */}
       <header role="banner" className="border-b border-djc-border bg-djc-surface/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
